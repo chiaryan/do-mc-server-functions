@@ -10,7 +10,7 @@ packages:
         - name: hello
           binary: false
           main: ""
-          runtime: go:default
+          runtime: go:1.25
           web: true
           parameters: {}
           environment: {}

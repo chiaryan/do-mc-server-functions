@@ -1,0 +1,4 @@
+github.com/jlemesh/dummy-go/v2 v2.0.0 h1:/Sfy4WlzuoYBqG4tRTgOf7jnDo3PkRrGEC8EdXusS6k=
+github.com/jlemesh/dummy-go/v2 v2.0.0/go.mod h1:RE6nB1MAzyj/7V/MO/p51UZ1MXZcKFFWKePaOPDw6AI=
+golang.org/x/exp v0.0.0-20251017212417-90e834f514db h1:by6IehL4BH5k3e3SJmcoNbOobMey2SLpAF79iPOEBvw=
+golang.org/x/exp v0.0.0-20251017212417-90e834f514db/go.mod h1:j/pmGrbnkbPtQfxEe5D0VQhZC6qKbfKifgD0oM7sR70=
