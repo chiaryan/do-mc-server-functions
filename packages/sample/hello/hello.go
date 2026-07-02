@@ -10,7 +10,11 @@ func Main(args map[string]interface{}) map[string]interface{} {
 	token, success := os.LookupEnv("TFE_TOKEN")
 
 	if !success {
-		return map[string]interface{}{"error": "no env"}
+		return map[string]interface{}{
+			"body": map[string]interface{}{
+				"error": "no env",
+			},
+		}
 	}
 
 	tfe.NewClient(&tfe.Config{
@@ -18,7 +22,11 @@ func Main(args map[string]interface{}) map[string]interface{} {
 		Token: token,
 	})
 
-	return map[string]interface{}{"error": "no env"}
+	return map[string]interface{}{
+		"body": map[string]interface{}{
+			"token": token[:5],
+		},
+	}
 
 	// if err != nil {
 	// 	return map[string]interface{}{"error": err.Error()}
