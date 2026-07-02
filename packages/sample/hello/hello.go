@@ -7,9 +7,15 @@ import (
 )
 
 func Main(args map[string]interface{}) map[string]interface{} {
+	token, success := os.LookupEnv("TFE_TOKEN")
+
+	if !success {
+		return map[string]interface{}{"error": "no env"}
+	}
+
 	client, err := tfe.NewClient(&tfe.Config{
 		// BasePath: "/api/v2",
-		Token: os.Getenv("TFE_TOKEN"),
+		Token: token,
 	})
 
 	if err != nil {
@@ -17,7 +23,7 @@ func Main(args map[string]interface{}) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"length":  len(os.Getenv("TFE_TOKEN")),
+		"token":   token[:5],
 		"version": client.RemoteAPIVersion(),
 	}
 
