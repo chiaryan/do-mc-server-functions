@@ -10,8 +10,10 @@ import (
 )
 
 func TestHelloName(t *testing.T) {
-	if !maps.Equal(Main(map[string]interface{}{"name": "nam"}), map[string]string{"body": "Hello nam!"}) {
-		t.Errorf("failed")
+	t.Setenv("TFE_TOKEN", "")
+
+	if !maps.Equal(Main(map[string]interface{}{"name": "nam"}), map[string]interface{}{"body": "Hello nam!"}) {
+		t.Errorf("failed %v", Main(map[string]interface{}{"name": "nam"}))
 	}
 }
 
