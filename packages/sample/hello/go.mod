@@ -2,8 +2,6 @@ module example
 
 go 1.25
 
-toolchain go1.25.11
-
 require (
 	github.com/hashicorp/go-tfe v1.101.0
 	github.com/jlemesh/dummy-go/v2 v2.0.0

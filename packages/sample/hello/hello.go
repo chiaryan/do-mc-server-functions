@@ -1,11 +1,7 @@
 package main
 
-import (
-	"os"
-)
-
 func Main(args map[string]interface{}) map[string]interface{} {
-	os.LookupEnv("TFE_TOKEN")
+	// os.LookupEnv("TFE_TOKEN")
 
 	return map[string]interface{}{"error": "no env"}
 	// if !success {
