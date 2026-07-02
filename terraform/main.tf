@@ -35,6 +35,10 @@ variable volume_name {
   default = "mc-data"
 }
 
+variable "ssh_keys" {
+  type = list(string)
+}
+
 provider "digitalocean" {
   token = var.dotoken
 }
@@ -43,17 +47,8 @@ data "digitalocean_volume" "main" {
   name = var.volume_name
 }
 
-resource "digitalocean_droplet" "main" {
-  image = "docker-20-04"
-  name = "mc-server"
-  region = var.region
-  size = "s-2vcpu-4gb"
-
-  # user_data = templatefile("cloud-config.yaml", {
-  #   DATA_VOL = var.volume_name
-  #   ITZG_ENV = var.itzg_env
-  # })
-  user_data = yamlencode({
+locals {
+  cloud_config = yamlencode({
     #cloud-config
     mounts = [
       [ "/dev/disk/by-id/scsi-0DO_Volume_${var.volume_name}", "/mnt/data", "ext4", "defaults,nofail,discard", "0", "0"]
@@ -67,11 +62,19 @@ resource "digitalocean_droplet" "main" {
         path = "/.env"
       }
     ]
-  }
-  )
+  })
+}
+
+resource "digitalocean_droplet" "main" {
+  image = "docker-20-04"
+  name = "mc-server"
+  region = var.region
+  size = "s-2vcpu-4gb"
+
+  user_data = "#cloud-config\n${locals.cloud_config}"
   volume_ids = [ data.digitalocean_volume.main.id ]
   monitoring = true
-  ssh_keys = ["63:fa:78:dd:49:02:63:bd:f1:6c:ad:ed:fd:78:03:d1"]
+  ssh_keys = var.ssh_keys
 }
 
 data "digitalocean_domain" "main" {

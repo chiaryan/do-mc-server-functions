@@ -13,6 +13,7 @@ packages:
           runtime: go:1.25
           web: true
           parameters: {}
-          environment: {}
+          environment: 
+            TFE_TOKEN: "${TFE_TOKEN}"
           annotations: {}
           limits: {}
