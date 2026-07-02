@@ -13,7 +13,7 @@ func Main(args map[string]interface{}) map[string]interface{} {
 	})
 
 	if err != nil {
-		return map[string]interface{}{"error": err}
+		return map[string]interface{}{"error": err.Error()}
 	}
 
 	return map[string]interface{}{
