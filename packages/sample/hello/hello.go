@@ -1,25 +1,33 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/hashicorp/go-tfe"
 )
 
-func Main(args map[string]interface{}) map[string]interface{} {
-	token, success := os.LookupEnv("TFE_TOKEN")
+func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
+	tfe_token, success := os.LookupEnv("TFE_TOKEN")
+	if !success {
+		return map[string]interface{}{
+			"body": map[string]interface{}{
+				"error": "no tfe token",
+			},
+		}
+	}
+	workspace_id, success := os.LookupEnv("WORKSPACE_ID")
 
 	if !success {
 		return map[string]interface{}{
 			"body": map[string]interface{}{
-				"error": "no env",
+				"error": "no workspace id",
 			},
 		}
 	}
 
 	client, err := tfe.NewClient(&tfe.Config{
-		// BasePath: "/api/v2",
-		Token: token,
+		Token: tfe_token,
 	})
 
 	if err != nil {
@@ -29,9 +37,24 @@ func Main(args map[string]interface{}) map[string]interface{} {
 			},
 		}
 	}
+
+	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
+		Workspace:       &tfe.Workspace{ID: workspace_id},
+		AllowEmptyApply: tfe.Bool(false),
+		AutoApply:       tfe.Bool(true),
+	})
+
+	if err != nil {
+		return map[string]interface{}{
+			"body": map[string]interface{}{
+				"error creating Run": err.Error(),
+			},
+		}
+	}
+
 	return map[string]interface{}{
 		"body": map[string]interface{}{
-			"version": client.RemoteAPIVersion(),
+			"run": run.ID,
 		},
 	}
 }

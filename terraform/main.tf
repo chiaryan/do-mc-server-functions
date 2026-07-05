@@ -37,6 +37,7 @@ variable volume_name {
 
 variable "ssh_keys" {
   type = list(string)
+  default = []
 }
 
 provider "digitalocean" {
