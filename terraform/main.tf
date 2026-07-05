@@ -86,6 +86,6 @@ resource "digitalocean_record" "main" {
   domain = data.digitalocean_domain.main.id
   name = var.record
   value = digitalocean_droplet.main.ipv4_address
-  ttl = 300
+  ttl = 30
   type = "A"
 }
