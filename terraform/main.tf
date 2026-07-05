@@ -72,7 +72,7 @@ resource "digitalocean_droplet" "main" {
   region = var.region
   size = "s-2vcpu-4gb"
 
-  user_data = "#cloud-config\n${locals.cloud_config}"
+  user_data = "#cloud-config\n${local.cloud_config}"
   volume_ids = [ data.digitalocean_volume.main.id ]
   monitoring = true
   ssh_keys = var.ssh_keys
