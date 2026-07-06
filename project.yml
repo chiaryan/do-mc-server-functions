@@ -7,7 +7,7 @@ packages:
       parameters: {}
       annotations: {}
       functions:
-        - name: hello
+        - name: start
           binary: false
           main: ""
           runtime: go:1.25
@@ -15,5 +15,6 @@ packages:
           parameters: {}
           environment: 
             TFE_TOKEN: "${TFE_TOKEN}"
+            WORKSPACE_ID: "${WORKSPACE_ID}"
           annotations: {}
           limits: {}
