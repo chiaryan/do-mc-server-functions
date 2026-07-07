@@ -8,9 +8,11 @@ import (
 
 	tfe "github.com/hashicorp/go-tfe"
 	dummygo "github.com/jlemesh/dummy-go/v2"
+	"github.com/joho/godotenv"
 )
 
 func TestMain(t *testing.T) {
+	godotenv.Load()
 
 	t.Logf("%v", Main(context.Background(), map[string]interface{}{}))
 }

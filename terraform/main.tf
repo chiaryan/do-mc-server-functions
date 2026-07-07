@@ -21,6 +21,10 @@ variable itzg_env {
   type = string
 }
 
+variable stop_function_address {
+  type = string
+}
+
 variable domain {
   type = string
 }
@@ -55,7 +59,8 @@ locals {
       [ "/dev/disk/by-id/scsi-0DO_Volume_${var.volume_name}", "/mnt/data", "ext4", "defaults,nofail,discard", "0", "0"]
     ]
     runcmd = [
-      "docker run -v /mnt/data:/data -p 25565:25565 --env-file .env itzg/minecraft-server"
+      "docker run -v /mnt/data:/data -p 25565:25565 --env-file .env itzg/minecraft-server",
+      "curl ${var.stop_function_address}",
     ]
     write_files = [
       {

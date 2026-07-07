@@ -42,12 +42,13 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 		Workspace:       &tfe.Workspace{ID: workspace_id},
 		AllowEmptyApply: tfe.Bool(false),
 		AutoApply:       tfe.Bool(true),
+		IsDestroy:       tfe.Bool(true),
 	})
 
 	if err != nil {
 		return map[string]interface{}{
 			"body": map[string]interface{}{
-				"error creating Run": err.Error(),
+				"error destroying Run": err.Error(),
 			},
 		}
 	}
