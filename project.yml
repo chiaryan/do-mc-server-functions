@@ -1,20 +1,22 @@
-parameters: {}
-environment: {}
+# parameters: {}
+# environment: {}
 packages:
     - name: sample
       shared: false
-      environment: {}
-      parameters: {}
-      annotations: {}
+      # environment: {}
+      # parameters: {}
+      # annotations: {}
+      environment: 
+        TFE_TOKEN: "${TFE_TOKEN}"
+        WORKSPACE_ID: "${WORKSPACE_ID}"
       functions:
         - name: start
           binary: false
           main: ""
           runtime: go:1.25
           web: true
-          parameters: {}
-          environment: 
-            TFE_TOKEN: "${TFE_TOKEN}"
-            WORKSPACE_ID: "${WORKSPACE_ID}"
-          annotations: {}
-          limits: {}
+        - name: stop
+          binary: false
+          main: ""
+          runtime: go:1.25
+          web: false
