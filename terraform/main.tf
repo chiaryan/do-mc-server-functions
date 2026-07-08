@@ -44,7 +44,12 @@ variable volume_name {
   default = "mc-data"
 }
 
-variable "ssh_keys" {
+variable auto_destroy {
+  type = bool
+  default = true
+}
+
+variable ssh_keys {
   type = list(string)
   default = []
 }
@@ -63,10 +68,10 @@ locals {
     mounts = [
       [ "/dev/disk/by-id/scsi-0DO_Volume_${var.volume_name}", "/mnt/data", "ext4", "defaults,nofail,discard", "0", "0"]
     ]
-    runcmd = [
-      "docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server",
-      "curl ${var.stop_function_address}",
-    ]
+    runcmd = concat(
+      ["docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server"],
+      var.auto_destroy ? ["curl ${var.stop_function_address}"] : []
+    )
     write_files = [
       {
         content = var.itzg_env
