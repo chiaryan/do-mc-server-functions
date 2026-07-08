@@ -29,6 +29,11 @@ variable domain {
   type = string
 }
 
+variable size {
+  type = string
+  default = "s-2vcpu-4gb"
+}
+
 variable record {
   type = string
   default = ""
@@ -75,7 +80,7 @@ resource "digitalocean_droplet" "main" {
   image = "docker-20-04"
   name = "mc-server"
   region = var.region
-  size = "s-2vcpu-4gb"
+  size = var.size
 
   user_data = "#cloud-config\n${local.cloud_config}"
   volume_ids = [ data.digitalocean_volume.main.id ]
