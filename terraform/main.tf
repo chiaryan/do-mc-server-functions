@@ -64,7 +64,7 @@ locals {
       [ "/dev/disk/by-id/scsi-0DO_Volume_${var.volume_name}", "/mnt/data", "ext4", "defaults,nofail,discard", "0", "0"]
     ]
     runcmd = [
-      "docker run -v /mnt/data:/data -it -p 25565:25565 --env-file .env itzg/minecraft-server",
+      "docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server",
       "curl ${var.stop_function_address}",
     ]
     write_files = [
