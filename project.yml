@@ -1,7 +1,7 @@
 # parameters: {}
 # environment: {}
 packages:
-    - name: sample
+    - name: api
       shared: false
       # environment: {}
       # parameters: {}
