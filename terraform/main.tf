@@ -34,6 +34,10 @@ variable size {
   default = "s-2vcpu-4gb"
 }
 
+variable stop_function_token {
+  type = string
+}
+
 variable record {
   type = string
   default = ""
@@ -70,7 +74,7 @@ locals {
     ]
     runcmd = concat(
       ["docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server"],
-      var.auto_destroy ? ["curl ${var.stop_function_address}"] : []
+      var.auto_destroy ? ["curl -X POST \"${var.stop_function_address}?blocking=true&result=true\"  -H \"Content-Type: application/json\" -u ${var.stop_function_token}"] : []
     )
     write_files = [
       {
