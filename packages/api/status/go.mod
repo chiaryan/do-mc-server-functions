@@ -2,7 +2,11 @@ module example
 
 go 1.25
 
-require github.com/hashicorp/go-tfe v1.101.0
+require (
+	github.com/hashicorp/go-tfe v1.101.0
+	github.com/joho/godotenv v1.5.1
+	github.com/mcstatus-io/mcutil/v4 v4.1.0
+)
 
 require (
 	github.com/google/go-querystring v1.2.0 // indirect

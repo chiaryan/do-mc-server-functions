@@ -5,6 +5,7 @@ go 1.25
 require (
 	github.com/hashicorp/go-tfe v1.101.0
 	github.com/jlemesh/dummy-go/v2 v2.0.0
+	github.com/joho/godotenv v1.5.1
 )
 
 require (
@@ -19,7 +20,4 @@ require (
 	golang.org/x/time v0.14.0 // indirect
 )
 
-require (
-	github.com/joho/godotenv v1.5.1 // indirect
-	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
-)
+require golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect

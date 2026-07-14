@@ -42,3 +42,22 @@ func TestApi(t *testing.T) {
 
 	t.Errorf("%s", client.RemoteAPIVersion())
 }
+
+func TestGet(t *testing.T) {
+	godotenv.Load()
+
+	client, err := tfe.NewClient(&tfe.Config{
+		// BasePath: "/api/v2",
+		Token: os.Getenv("TFE_TOKEN"),
+	})
+
+	if err != nil {
+		t.Errorf("error")
+	}
+
+	wsp, err := client.Workspaces.ReadByID(context.Background(), os.Getenv("WORKSPACE_ID"))
+	run, err := client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
+
+	t.Errorf("%v", run.CreatedAt)
+
+}
