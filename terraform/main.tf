@@ -74,7 +74,7 @@ locals {
     ]
     runcmd = concat(
       ["docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server"],
-      var.auto_destroy ? ["curl -X POST \"${var.stop_function_address}?blocking=true&result=true\"  -H \"Content-Type: application/json\" -u ${var.stop_function_token}"] : []
+      var.auto_destroy ? ["while true; do curl -X DELETE \"${var.stop_function_address}?blocking=true&result=true\"  -H \"Content-Type: application/json\"; sleep 3000; done"] : []
     )
     write_files = [
       {

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-tfe"
+	"github.com/mcstatus-io/mcutil/v4/response"
 	"github.com/mcstatus-io/mcutil/v4/status"
 )
 
@@ -44,62 +45,151 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 
 	switch args["http"].(map[string]interface{})["method"] {
 	case "GET":
-
-		wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
-		if err != nil {
-			return CreateErrorResponse(err.Error())
+		type Run struct {
+			run *tfe.Run
+			err error
+		}
+		type Status struct {
+			status *response.StatusModern
+			err    error
 		}
 
-		current_run, err := client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
-		if err != nil {
-			return CreateErrorResponse(err.Error())
-		}
+		tf_chan := make(chan Run)
+		mc_chan := make(chan Status)
 
-		if current_run.IsDestroy {
+		go func() {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
 
-			if current_run.Status == "applied" {
-				return CreateResponseBody(map[string]interface{}{
-					"status": "paused",
-					"at":     current_run.CreatedAt,
-				})
+			tf_chan <- func() Run {
+				wsp, err := client.Workspaces.ReadByID(ctx, workspace_id)
+				if err != nil {
+					return Run{err: err}
+				}
+
+				current_run, err := client.Runs.Read(ctx, wsp.CurrentRun.ID)
+				if err != nil {
+					return Run{err: err}
+				}
+
+				return Run{run: current_run}
+			}()
+		}()
+
+		go func() {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			status, err := status.Modern(ctx, url, 25565)
+			mc_chan <- Status{status, err}
+		}()
+
+		// tf := <-tf_chan
+		// if tf.err != nil {
+		// 	return CreateErrorResponse(tf.err.Error())
+		// }
+		// mc := <-mc_chan
+
+		var tf Run
+		var mc Status
+
+		for range 2 {
+			select {
+			case tf = <-tf_chan:
+				if tf.err != nil {
+					return CreateErrorResponse(tf.err.Error())
+				}
+				if tf.run.IsDestroy {
+
+					if tf.run.Status == "applied" {
+						return CreateResponseBody(map[string]interface{}{
+							"status": "paused",
+							"at":     tf.run.CreatedAt,
+						})
+					}
+
+					return CreateResponseBody(map[string]interface{}{
+						"status": "pausing",
+						"at":     tf.run.CreatedAt,
+					})
+				}
+
+				if tf.run.Status != "applied" {
+					return CreateResponseBody(map[string]interface{}{
+						"status": "creating",
+						"at":     tf.run.CreatedAt,
+					})
+				}
+
+			case mc = <-mc_chan:
+				if mc.err == nil {
+					ret := map[string]interface{}{
+						"status":      "running",
+						"motd":        mc.status.MOTD.Raw,
+						"players":     *mc.status.Players.Online,
+						"max_players": *mc.status.Players.Max,
+						"url":         url,
+					}
+
+					if mc.status.Favicon != nil {
+						ret["icon"] = *mc.status.Favicon
+					}
+
+					return CreateResponseBody(ret)
+				}
+
 			}
-
-			return CreateResponseBody(map[string]interface{}{
-				"status": "pausing",
-				"at":     current_run.CreatedAt,
-			})
 		}
 
-		if current_run.Status != "applied" {
-			return CreateResponseBody(map[string]interface{}{
-				"status": "creating",
-				"at":     current_run.CreatedAt,
-			})
-		}
+		return CreateResponseBody(map[string]interface{}{
+			"status": "starting",
+			"at":     tf.run.CreatedAt,
+			"err":    mc.err.Error(),
+		})
 
-		status, err := status.Modern(context.Background(), url, 25565)
+		// if tf.run.IsDestroy {
 
-		if err != nil {
-			return CreateResponseBody(map[string]interface{}{
-				"status": "starting",
-				"url":    url,
-			})
-		}
+		// 	if tf.run.Status == "applied" {
+		// 		return CreateResponseBody(map[string]interface{}{
+		// 			"status": "paused",
+		// 			"at":     tf.run.CreatedAt,
+		// 		})
+		// 	}
 
-		ret := map[string]interface{}{
-			"status":      "running",
-			"motd":        status.MOTD.Raw,
-			"players":     *status.Players.Online,
-			"max_players": *status.Players.Max,
-			"url":         url,
-			"icon":        *status.Favicon,
-		}
+		// 	return CreateResponseBody(map[string]interface{}{
+		// 		"status": "pausing",
+		// 		"at":     tf.run.CreatedAt,
+		// 	})
+		// }
 
-		if status.Favicon != nil {
-			ret["icon"] = *status.Favicon
-		}
+		// if tf.run.Status != "applied" {
+		// 	return CreateResponseBody(map[string]interface{}{
+		// 		"status": "creating",
+		// 		"at":     tf.run.CreatedAt,
+		// 	})
+		// }
 
-		return CreateResponseBody(ret)
+		// if mc.err != nil {
+		// 	return CreateResponseBody(map[string]interface{}{
+		// 		"status": "starting",
+		// 		"at":     tf.run.CreatedAt,
+		// 		"err":    mc.err.Error(),
+		// 	})
+		// }
+
+		// ret := map[string]interface{}{
+		// 	"status":      "running",
+		// 	"motd":        mc.status.MOTD.Raw,
+		// 	"players":     *mc.status.Players.Online,
+		// 	"max_players": *mc.status.Players.Max,
+		// 	"url":         url,
+		// }
+
+		// if mc.status.Favicon != nil {
+		// 	ret["icon"] = *mc.status.Favicon
+		// }
+
+		// return CreateResponseBody(ret)
 
 	case "POST":
 		wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
