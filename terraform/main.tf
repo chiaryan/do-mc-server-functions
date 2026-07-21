@@ -7,56 +7,6 @@ terraform {
   }
 }
 
-variable dotoken {
-  type = string
-  description = "DigitalOcean Token (starts with dop_....)"
-}
-
-variable region {
-  type = string
-  default = "sgp1"
-}
-
-variable itzg_env {
-  type = string
-}
-
-variable stop_function_address {
-  type = string
-}
-
-variable stop_function_token {
-  type = string
-}
-
-variable domain {
-  type = string
-}
-
-variable size {
-  type = string
-  default = "s-2vcpu-4gb"
-}
-
-variable record {
-  type = string
-  default = ""
-}
-
-variable volume_name {
-  type = string
-  default = "mc-data"
-}
-
-variable auto_destroy {
-  type = bool
-  default = true
-}
-
-variable ssh_key {
-  type = string
-  default = ""
-}
 
 provider "digitalocean" {
   token = var.dotoken
@@ -74,7 +24,7 @@ locals {
     ]
     runcmd = concat(
       ["docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server"],
-      var.auto_destroy ? ["while true; do curl -X DELETE \"${var.stop_function_address}?blocking=true&result=true\"  -H \"Content-Type: application/json\" -u ${var.stop_function_token}; sleep 3000; done"] : []
+      var.auto_destroy ? ["while true; do curl -X POST \"${var.stop_function_address}?blocking=true&result=true\"  -H \"Content-Type: application/json\" -u ${var.stop_function_token}; sleep 300; done"] : []
     )
     write_files = [
       {

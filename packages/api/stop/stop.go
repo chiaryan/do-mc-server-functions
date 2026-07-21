@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func CreateErrorResponse(err string) map[string]interface{} {
@@ -18,6 +20,39 @@ func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	}
 }
 
+func lookupTfEnvs() []*tfe.RunVariable {
+	var vars []*tfe.RunVariable
+	type S struct {
+		From string
+		To   string
+	}
+
+	var_name_mapping := []S{
+		{From: "STOP_ADDRESS", To: "stop_function_address"},
+		{From: "STOP_ADDRESS_TOKEN", To: "stop_function_token"},
+		{From: "DO_TOKEN", To: "dotoken"},
+		{From: "RECORD", To: "record"},
+		{From: "DOMAIN", To: "domain"},
+		{From: "ITZG_ENV", To: "itzg_env"},
+		{From: "INSTANCE_SSH_KEY", To: "ssh_key"},
+		{From: "INSTANCE_SIZE", To: "size"},
+		{From: "INSTANCE_VOLUME_NAME", To: "volume_name"},
+		{From: "INSTANCE_REGION", To: "region"},
+		{From: "INSTANCE_AUTO_DESTROY", To: "auto_destroy"},
+	}
+
+	for _, mapping := range var_name_mapping {
+		value, success := os.LookupEnv(mapping.From)
+		if success || value != "" {
+			// hcl value requires double quote
+
+			hclstr := string(hclwrite.TokensForValue(cty.StringVal(value)).Bytes())
+			vars = append(vars, &tfe.RunVariable{Key: mapping.To, Value: hclstr})
+		}
+	}
+	return vars
+}
+
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
 	tfe_token, success := os.LookupEnv("TFE_TOKEN")
@@ -28,10 +63,6 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	workspace_id, success := os.LookupEnv("WORKSPACE_ID")
 	if !success {
 		panic("no workspace id")
-	}
-
-	if args["http"].(map[string]interface{})["method"] != "DELETE" {
-		return CreateErrorResponse("invalid http method")
 	}
 
 	client, err := tfe.NewClient(&tfe.Config{
@@ -53,7 +84,7 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	}
 
 	// if the last run was a non-destroy run, create the destroy run
-	if current_run.IsDestroy {
+	if current_run.IsDestroy && current_run.Status == "applied" {
 		return CreateErrorResponse("server is paused")
 	}
 
@@ -62,6 +93,7 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 		AllowEmptyApply: tfe.Bool(false),
 		AutoApply:       tfe.Bool(true),
 		IsDestroy:       tfe.Bool(true),
+		Variables:       lookupTfEnvs(),
 	})
 
 	if err != nil {
