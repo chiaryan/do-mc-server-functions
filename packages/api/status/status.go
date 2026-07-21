@@ -6,8 +6,10 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/mcstatus-io/mcutil/v4/response"
 	"github.com/mcstatus-io/mcutil/v4/status"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func CreateErrorResponse(err string) map[string]interface{} {
@@ -58,19 +60,19 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 }
 
 func post(ctx context.Context, client *tfe.Client, workspace_id string) map[string]interface{} {
-	wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
-	if err != nil {
-		return CreateErrorResponse(err.Error())
-	}
+	// wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
+	// if err != nil {
+	// 	return CreateErrorResponse(err.Error())
+	// }
 
-	current_run, err := client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
-	if err != nil {
-		return CreateErrorResponse(err.Error())
-	}
+	// _, err = client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
+	// if err != nil {
+	// 	return CreateErrorResponse(err.Error())
+	// }
 
-	if current_run.Status != "applied" || !current_run.IsDestroy {
-		return CreateErrorResponse("server still up")
-	}
+	// if current_run.Status != "applied" || !current_run.IsDestroy {
+	// 	return CreateErrorResponse("server still up")
+	// }
 	// if the last run was a completed destroy, create the run
 
 	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
@@ -113,7 +115,10 @@ func lookupTfEnvs() []*tfe.RunVariable {
 	for _, mapping := range var_name_mapping {
 		value, success := os.LookupEnv(mapping.From)
 		if success || value != "" {
-			vars = append(vars, &tfe.RunVariable{Key: mapping.To, Value: value})
+			// hcl value requires double quote
+
+			hclstr := string(hclwrite.TokensForValue(cty.StringVal(value)).Bytes())
+			vars = append(vars, &tfe.RunVariable{Key: mapping.To, Value: hclstr})
 		}
 	}
 	return vars

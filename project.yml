@@ -25,13 +25,9 @@ packages:
           main: ""
           runtime: go:1.25
           web: false
-          limits:
-            memory: 128
 
         - name: status
           binary: false
           main: ""
           runtime: go:1.25
           web: true
-          limits:
-            memory: 128
