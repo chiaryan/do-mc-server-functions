@@ -25,6 +25,10 @@ variable stop_function_address {
   type = string
 }
 
+variable stop_function_token {
+  type = string
+}
+
 variable domain {
   type = string
 }
@@ -32,10 +36,6 @@ variable domain {
 variable size {
   type = string
   default = "s-2vcpu-4gb"
-}
-
-variable stop_function_token {
-  type = string
 }
 
 variable record {
@@ -53,9 +53,9 @@ variable auto_destroy {
   default = true
 }
 
-variable ssh_keys {
-  type = list(string)
-  default = []
+variable ssh_key {
+  type = string
+  default = ""
 }
 
 provider "digitalocean" {
@@ -74,7 +74,7 @@ locals {
     ]
     runcmd = concat(
       ["docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server"],
-      var.auto_destroy ? ["while true; do curl -X DELETE \"${var.stop_function_address}?blocking=true&result=true\"  -H \"Content-Type: application/json\"; sleep 3000; done"] : []
+      var.auto_destroy ? ["while true; do curl -X DELETE \"${var.stop_function_address}\"  -H \"Content-Type: application/json\" -u ${var.stop_function_token}; sleep 3000; done"] : []
     )
     write_files = [
       {
@@ -94,7 +94,7 @@ resource "digitalocean_droplet" "main" {
   user_data = "#cloud-config\n${local.cloud_config}"
   volume_ids = [ data.digitalocean_volume.main.id ]
   monitoring = true
-  ssh_keys = var.ssh_keys
+  ssh_keys = var.ssh_key == "" ? [] : [var.ssh_key]
 }
 
 data "digitalocean_domain" "main" {

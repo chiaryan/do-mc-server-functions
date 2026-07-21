@@ -77,6 +77,7 @@ func post(ctx context.Context, client *tfe.Client, workspace_id string) map[stri
 		Workspace:       &tfe.Workspace{ID: workspace_id},
 		AllowEmptyApply: tfe.Bool(false),
 		AutoApply:       tfe.Bool(true),
+		Variables:       lookupTfEnvs(),
 	})
 
 	if err != nil {
@@ -86,6 +87,36 @@ func post(ctx context.Context, client *tfe.Client, workspace_id string) map[stri
 	return CreateResponseBody(map[string]interface{}{
 		"run": run.ID,
 	})
+}
+
+func lookupTfEnvs() []*tfe.RunVariable {
+	var vars []*tfe.RunVariable
+	type S struct {
+		From string
+		To   string
+	}
+
+	var_name_mapping := []S{
+		{From: "STOP_ADDRESS", To: "stop_function_address"},
+		{From: "STOP_ADDRESS_TOKEN", To: "stop_function_token"},
+		{From: "DO_TOKEN", To: "dotoken"},
+		{From: "RECORD", To: "record"},
+		{From: "DOMAIN", To: "domain"},
+		{From: "ITZG_ENV", To: "itzg_env"},
+		{From: "INSTANCE_SSH_KEY", To: "ssh_key"},
+		{From: "INSTANCE_SIZE", To: "size"},
+		{From: "INSTANCE_VOLUME_NAME", To: "volume_name"},
+		{From: "INSTANCE_REGION", To: "region"},
+		{From: "INSTANCE_AUTO_DESTROY", To: "auto_destroy"},
+	}
+
+	for _, mapping := range var_name_mapping {
+		value, success := os.LookupEnv(mapping.From)
+		if success || value != "" {
+			vars = append(vars, &tfe.RunVariable{Key: mapping.To, Value: value})
+		}
+	}
+	return vars
 }
 
 func get(ctx context.Context, client *tfe.Client, workspace_id string, url string) map[string]interface{} {
