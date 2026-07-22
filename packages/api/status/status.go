@@ -59,20 +59,32 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	}
 }
 
+func isProgressStatus(status tfe.RunStatus) bool {
+	return status != "applied" &&
+		status != "errored" &&
+		status != "discarded" &&
+		status != "canceled" &&
+		status != "planned_and_finished"
+}
+
 func post(ctx context.Context, client *tfe.Client, workspace_id string) map[string]interface{} {
-	// wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
-	// if err != nil {
-	// 	return CreateErrorResponse(err.Error())
-	// }
+	wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
 
-	// _, err = client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
-	// if err != nil {
-	// 	return CreateErrorResponse(err.Error())
-	// }
+	current_run, err := client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
 
-	// if current_run.Status != "applied" || !current_run.IsDestroy {
-	// 	return CreateErrorResponse("server still up")
-	// }
+	if isProgressStatus(current_run.Status) {
+		return CreateErrorResponse("run in progress")
+	}
+
+	if !current_run.IsDestroy {
+		return CreateErrorResponse("instance is created")
+	}
 	// if the last run was a completed destroy, create the run
 
 	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
@@ -174,21 +186,20 @@ func get(ctx context.Context, client *tfe.Client, workspace_id string, url strin
 				return CreateErrorResponse(tf.err.Error())
 			}
 			if tf.run.IsDestroy {
-
-				if tf.run.Status == "applied" {
+				if isProgressStatus(tf.run.Status) {
 					return CreateResponseBody(map[string]interface{}{
-						"status": "paused",
+						"status": "pausing",
 						"at":     tf.run.CreatedAt,
 					})
 				}
 
 				return CreateResponseBody(map[string]interface{}{
-					"status": "pausing",
+					"status": "paused",
 					"at":     tf.run.CreatedAt,
 				})
 			}
 
-			if tf.run.Status != "applied" {
+			if isProgressStatus(tf.run.Status) {
 				return CreateResponseBody(map[string]interface{}{
 					"status": "creating",
 					"at":     tf.run.CreatedAt,

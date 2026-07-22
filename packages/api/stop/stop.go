@@ -53,6 +53,14 @@ func lookupTfEnvs() []*tfe.RunVariable {
 	return vars
 }
 
+func isProgressStatus(status tfe.RunStatus) bool {
+	return status != "applied" &&
+		status != "errored" &&
+		status != "discarded" &&
+		status != "canceled" &&
+		status != "planned_and_finished"
+}
+
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
 	tfe_token, success := os.LookupEnv("TFE_TOKEN")
@@ -84,10 +92,13 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	}
 
 	// if the last run was a non-destroy run, create the destroy run
-	if current_run.IsDestroy && current_run.Status == "applied" {
-		return CreateErrorResponse("server is paused")
+	if isProgressStatus(current_run.Status) {
+		return CreateErrorResponse("run in progress")
 	}
 
+	if current_run.IsDestroy {
+		return CreateErrorResponse("instance is destroyed")
+	}
 	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
 		Workspace:       &tfe.Workspace{ID: workspace_id},
 		AllowEmptyApply: tfe.Bool(false),
