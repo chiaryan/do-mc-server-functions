@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/mcstatus-io/mcutil/v4/response"
 	"github.com/mcstatus-io/mcutil/v4/status"
 	"github.com/zclconf/go-cty/cty"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func CreateErrorResponse(err string) map[string]interface{} {
@@ -54,6 +56,32 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	case "POST":
 		return post(ctx, client, workspace_id)
 
+	case "DELETE":
+
+		password, success := os.LookupEnv("PASSWORD_HASH")
+		if !success {
+			panic("no url")
+		}
+
+		hash, ok := args["http"].(map[string]interface{})["headers"].(map[string]string)["authorization"]
+
+		if !ok {
+			return map[string]any{"statusCode": 401}
+		}
+
+		if !strings.HasPrefix(hash, "Bearer ") {
+			return map[string]any{"statusCode": 400}
+		}
+
+		hash = hash[7:]
+
+		err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+
+		if err != nil {
+			return map[string]any{"statusCode": 401}
+		}
+
+		return delete(ctx, client, workspace_id)
 	default:
 		return CreateErrorResponse("invalid http method")
 	}
@@ -65,6 +93,39 @@ func isProgressStatus(status tfe.RunStatus) bool {
 		status != "discarded" &&
 		status != "canceled" &&
 		status != "planned_and_finished"
+}
+
+func delete(ctx context.Context, client *tfe.Client, workspace_id string) map[string]interface{} {
+	wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
+
+	current_run, err := client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
+
+	// if the last run was a non-destroy run, create the destroy run
+	if current_run.IsDestroy && current_run.Status == "applied" {
+		return CreateErrorResponse("server is paused")
+	}
+
+	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
+		Workspace:       &tfe.Workspace{ID: workspace_id},
+		AllowEmptyApply: tfe.Bool(false),
+		AutoApply:       tfe.Bool(true),
+		IsDestroy:       tfe.Bool(true),
+		Variables:       lookupTfEnvs(),
+	})
+
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
+
+	return CreateResponseBody(map[string]interface{}{
+		"run": run.ID,
+	})
 }
 
 func post(ctx context.Context, client *tfe.Client, workspace_id string) map[string]interface{} {

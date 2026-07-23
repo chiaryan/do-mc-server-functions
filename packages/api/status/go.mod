@@ -1,12 +1,18 @@
 module example
 
-go 1.25
+go 1.25.0
 
 require (
+	github.com/digitalocean/godo v1.200.0
 	github.com/hashicorp/go-tfe v1.101.0
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/mcstatus-io/mcutil/v4 v4.1.0
 	github.com/zclconf/go-cty v1.16.3
+)
+
+require (
+	golang.org/x/crypto v0.54.0
+	golang.org/x/oauth2 v0.27.0 // indirect
 )
 
 require (
@@ -21,10 +27,10 @@ require (
 	github.com/hashicorp/jsonapi v1.4.3-0.20250220162346-81a76b606f3e // indirect
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	golang.org/x/mod v0.26.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/mod v0.37.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.35.0 // indirect
+	golang.org/x/tools v0.47.0 // indirect
 )
