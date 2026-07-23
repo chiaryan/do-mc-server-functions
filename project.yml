@@ -19,13 +19,9 @@ packages:
         INSTANCE_SSH_KEY: "${INSTANCE_SSH_KEY}"
         INSTANCE_SIZE: "${INSTANCE_SIZE}"
         INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
+        STOP_ADDRESS_PASSWORD_HASH: "${STOP_ADDRESS_PASSWORD_HASH}"
+        STOP_ADDRESS_PASSWORD: "${STOP_ADDRESS_PASSWORD}"
       functions:
-        - name: stop
-          binary: false
-          main: ""
-          runtime: go:1.25
-          web: false
-
         - name: status
           binary: false
           main: ""
