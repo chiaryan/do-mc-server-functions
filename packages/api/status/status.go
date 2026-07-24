@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"os"
 	"strings"
 
+	"github.com/digitalocean/godo"
 	"github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/mcstatus-io/mcutil/v4/response"
@@ -24,41 +25,35 @@ func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	}
 }
 
+var url, do_token, droplet_name, password, volume_id string
+var client godo.Client
+
+func env(key string) string {
+	url, success := os.LookupEnv(key)
+	if !success {
+		panic("no env " + key)
+	}
+	return url
+}
+
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
+	var success bool
 
-	tfe_token, success := os.LookupEnv("TFE_TOKEN")
-	if !success {
-		panic("no tfe token")
-	}
+	url = env("SERVER_DOMAIN")
+	do_token = env("DO_TOKEN")
 
-	workspace_id, success := os.LookupEnv("WORKSPACE_ID")
-	if !success {
-		panic("no workspace id")
-	}
-
-	url, success := os.LookupEnv("SERVER_DOMAIN")
-	if !success {
-		panic("no url")
-	}
-
-	client, err := tfe.NewClient(&tfe.Config{
-		Token: tfe_token,
-	})
-
-	if err != nil {
-		return CreateErrorResponse(fmt.Sprintf("error creating client %s", err.Error()))
-	}
+	client = *godo.NewFromToken(do_token)
 
 	switch args["http"].(map[string]interface{})["method"] {
 	case "GET":
-		return get(ctx, client, workspace_id, url)
+		return get(ctx)
 
 	case "POST":
-		return post(ctx, client, workspace_id)
+		return post(ctx)
 
 	case "DELETE":
 
-		password, success := os.LookupEnv("PASSWORD_HASH")
+		password, success = os.LookupEnv("PASSWORD_HASH")
 		if !success {
 			panic("no url")
 		}
@@ -81,46 +76,40 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 			return map[string]any{"statusCode": 401}
 		}
 
-		return delete(ctx, client, workspace_id)
+		return delete(ctx)
 	default:
 		return CreateErrorResponse("invalid http method")
 	}
 }
 
-func delete(ctx context.Context, client *tfe.Client, workspace_id string) map[string]interface{} {
-	wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
+func getDropletByName(ctx context.Context) (*godo.Droplet, error) {
+	dpts, _, err := client.Droplets.ListByName(ctx, env("INSTANCE_NAME"), &godo.ListOptions{})
 	if err != nil {
-		return CreateErrorResponse(err.Error())
+		return nil, errors.New("failed to get droplets")
+	}
+	if len(dpts) == 0 {
+		return nil, errors.New("droplet not found")
 	}
 
-	current_run, err := client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
-	if err != nil {
-		return CreateErrorResponse(err.Error())
-	}
-
-	// if the last run was a non-destroy run, create the destroy run
-	if current_run.IsDestroy && current_run.Status == "applied" {
-		return CreateErrorResponse("server is paused")
-	}
-
-	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
-		Workspace:       &tfe.Workspace{ID: workspace_id},
-		AllowEmptyApply: tfe.Bool(false),
-		AutoApply:       tfe.Bool(true),
-		IsDestroy:       tfe.Bool(true),
-		Variables:       lookupTfEnvs(),
-	})
-
-	if err != nil {
-		return CreateErrorResponse(err.Error())
-	}
-
-	return CreateResponseBody(map[string]interface{}{
-		"run": run.ID,
-	})
+	return &dpts[0], nil
 }
 
-func post(ctx context.Context, client *tfe.Client, workspace_id string) map[string]interface{} {
+func delete(ctx context.Context) map[string]interface{} {
+	dpt, err := getDropletByName(ctx)
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
+
+	_, err = client.Droplets.Delete(ctx, dpt.ID)
+
+	if err != nil {
+		return CreateErrorResponse(err.Error())
+	}
+	return CreateResponseBody(map[string]any{"delete": "ok"})
+}
+
+func post(ctx context.Context) map[string]interface{} {
+
 	// wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
 	// if err != nil {
 	// 	return CreateErrorResponse(err.Error())
@@ -136,20 +125,20 @@ func post(ctx context.Context, client *tfe.Client, workspace_id string) map[stri
 	// }
 	// if the last run was a completed destroy, create the run
 
-	run, err := client.Runs.Create(ctx, tfe.RunCreateOptions{
-		Workspace:       &tfe.Workspace{ID: workspace_id},
-		AllowEmptyApply: tfe.Bool(false),
-		AutoApply:       tfe.Bool(true),
-		Variables:       lookupTfEnvs(),
+	_, _, err := client.Droplets.Create(ctx, &godo.DropletCreateRequest{
+		Name:  droplet_name,
+		Image: godo.DropletCreateImage{Slug: "ubuntu-24-04-x64"},
+		Volumes: []godo.DropletCreateVolume{
+			{ID: env("INSTANCE_VOLUME_ID")},
+		},
+		Size: env("INSTANCE_SIZE"),
 	})
 
 	if err != nil {
 		return CreateErrorResponse(err.Error())
 	}
 
-	return CreateResponseBody(map[string]interface{}{
-		"run": run.ID,
-	})
+	return CreateResponseBody(map[string]interface{}{"create": "ok"})
 }
 
 func lookupTfEnvs() []*tfe.RunVariable {
@@ -185,10 +174,11 @@ func lookupTfEnvs() []*tfe.RunVariable {
 	return vars
 }
 
-func get(ctx context.Context, client *tfe.Client, workspace_id string, url string) map[string]interface{} {
+func get(ctx context.Context) map[string]interface{} {
 	type Run struct {
-		run *tfe.Run
-		err error
+		droplet godo.Droplet
+		actions []godo.Action
+		err     error
 	}
 	type Status struct {
 		status *response.StatusModern
@@ -203,17 +193,18 @@ func get(ctx context.Context, client *tfe.Client, workspace_id string, url strin
 		defer cancel()
 
 		tf_chan <- func() Run {
-			wsp, err := client.Workspaces.ReadByID(ctx, workspace_id)
+			dpt, err := getDropletByName(ctx)
 			if err != nil {
 				return Run{err: err}
 			}
 
-			current_run, err := client.Runs.Read(ctx, wsp.CurrentRun.ID)
+			actions, _, err := client.Droplets.Actions(ctx, dpt.ID, &godo.ListOptions{})
+
 			if err != nil {
 				return Run{err: err}
 			}
 
-			return Run{run: current_run}
+			return Run{actions: actions, droplet: *dpt}
 		}()
 	}()
 
@@ -231,29 +222,41 @@ func get(ctx context.Context, client *tfe.Client, workspace_id string, url strin
 	for range 2 {
 		select {
 		case tf = <-tf_chan:
-			if tf.err != nil {
-				return CreateErrorResponse(tf.err.Error())
-			}
-			if tf.run.IsDestroy {
 
-				if tf.run.Status == "applied" {
+			if tf.err != nil {
+				if tf.err.Error() == "droplet not found" {
 					return CreateResponseBody(map[string]interface{}{
 						"status": "paused",
-						"at":     tf.run.CreatedAt,
 					})
 				}
-
-				return CreateResponseBody(map[string]interface{}{
-					"status": "pausing",
-					"at":     tf.run.CreatedAt,
-				})
+				return CreateErrorResponse(tf.err.Error())
 			}
 
-			if tf.run.Status != "applied" {
-				return CreateResponseBody(map[string]interface{}{
-					"status": "creating",
-					"at":     tf.run.CreatedAt,
-				})
+			for _, atn := range tf.actions {
+				if atn.Type == "destroy" {
+					return CreateResponseBody(map[string]interface{}{
+						"status": "pausing",
+					})
+				}
+			}
+			for _, atn := range tf.actions {
+				if atn.Type == "destroy" {
+					return CreateResponseBody(map[string]interface{}{
+						"status": "pausing",
+					})
+				}
+			}
+			for _, atn := range tf.actions {
+				if atn.Type == "create" {
+					if atn.Status == "in-progress" {
+						return CreateResponseBody(map[string]interface{}{
+							"status": "creating",
+						})
+					}
+					if atn.Status == "errored" {
+						return CreateErrorResponse("droplet creation errored")
+					}
+				}
 			}
 
 		case mc = <-mc_chan:
@@ -278,7 +281,6 @@ func get(ctx context.Context, client *tfe.Client, workspace_id string, url strin
 
 	return CreateResponseBody(map[string]interface{}{
 		"status": "starting",
-		"at":     tf.run.CreatedAt,
 		"err":    mc.err.Error(),
 	})
 }

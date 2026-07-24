@@ -92,8 +92,12 @@ resource digitalocean_app main {
       value = var.digitalocean_droplet_size
     }
     env {
+      key = "INSTANCE_NAME"
+      value = "${var.name}-minecraft"
+    }
+    env {
       key = "INSTANCE_VOLUME_NAME"
-      value = digitalocean_ssh_key.main.name
+      value = "${var.name}-vol"
     }
     env {
       key = "STOP_ADDRESS_PASSWORD_HASH"

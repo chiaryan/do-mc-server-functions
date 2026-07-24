@@ -7,18 +7,17 @@ packages:
       # parameters: {}
       # annotations: {}
       environment: 
-        TFE_TOKEN: "${TFE_TOKEN}"
-        WORKSPACE_ID: "${WORKSPACE_ID}"
-        SERVER_DOMAIN: "${SERVER_DOMAIN}"
+        SERVER_DOMAIN: "${RECORD}.${DOMAIN}"
         DO_TOKEN: "${DO_TOKEN}"
         ITZG_ENV: "${ITZG_ENV}"
-        STOP_ADDRESS: "${STOP_ADDRESS}"
-        STOP_ADDRESS_TOKEN: "${STOP_ADDRESS_TOKEN}"
         RECORD: "${RECORD}"
         DOMAIN: "${DOMAIN}"
+        INSTANCE_NAME: "${INSTANCE_NAME}"
         INSTANCE_SSH_KEY: "${INSTANCE_SSH_KEY}"
         INSTANCE_SIZE: "${INSTANCE_SIZE}"
         INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
+        INSTANCE_VOLUME_ID: "${INSTANCE_VOLUME_ID}"
+        STOP_ADDRESS: "${STOP_ADDRESS}"
         STOP_ADDRESS_PASSWORD_HASH: "${STOP_ADDRESS_PASSWORD_HASH}"
         STOP_ADDRESS_PASSWORD: "${STOP_ADDRESS_PASSWORD}"
       functions:
