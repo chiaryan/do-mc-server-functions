@@ -35,7 +35,7 @@ resource digitalocean_app main {
     region = var.digitalocean_region
 
     function {
-      name = var.name
+      name = "functions"
       github {
         repo = var.github_repo
         branch = var.github_branch
@@ -52,10 +52,6 @@ resource digitalocean_app main {
     env {
       key = "ITZG_ENV"
       value = var.itzg_env
-    }
-    env {
-      key = "FUNCTIONS_URL"
-      value = "$${_self.PUBLIC_URL}"
     }
     env {
       key = "RECORD"
@@ -80,6 +76,10 @@ resource digitalocean_app main {
     env {
       key = "INSTANCE_VOLUME_NAME"
       value = "${var.name}-vol"
+    }
+    env {
+      key = "INSTANCE_VOLUME_ID"
+      value = "${digitalocean_volume.main.id}"
     }
     env {
       key = "FUNCTIONS_PASSWORD_HASH"

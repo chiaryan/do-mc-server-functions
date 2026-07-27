@@ -6,20 +6,21 @@ packages:
       # environment: {}
       # parameters: {}
       # annotations: {}
-      environment: 
-        SERVER_DOMAIN: "${RECORD}.${DOMAIN}"
-        DO_TOKEN: "${DO_TOKEN}"
-        ITZG_ENV: "${ITZG_ENV}"
-        RECORD: "${RECORD}"
-        DOMAIN: "${DOMAIN}"
-        INSTANCE_NAME: "${INSTANCE_NAME}"
-        INSTANCE_SSH_KEY: "${INSTANCE_SSH_KEY}"
-        INSTANCE_SIZE: "${INSTANCE_SIZE}"
-        INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
-        INSTANCE_VOLUME_ID: "${INSTANCE_VOLUME_ID}"
-        STOP_ADDRESS: "${STOP_ADDRESS}"
-        STOP_ADDRESS_PASSWORD_HASH: "${STOP_ADDRESS_PASSWORD_HASH}"
-        STOP_ADDRESS_PASSWORD: "${STOP_ADDRESS_PASSWORD}"
+      # environment: 
+      #   SERVER_DOMAIN: "${RECORD}.${DOMAIN}"
+      #   DO_TOKEN: "${DO_TOKEN}"
+      #   ITZG_ENV: "${ITZG_ENV}"
+      #   RECORD: "${RECORD}"
+      #   DOMAIN: "${DOMAIN}"
+      #   INSTANCE_NAME: "${INSTANCE_NAME}"
+      #   INSTANCE_SSH_KEY: "${INSTANCE_SSH_KEY}"
+      #   INSTANCE_SIZE: "${INSTANCE_SIZE}"
+      #   INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
+      #   INSTANCE_VOLUME_ID: "${INSTANCE_VOLUME_ID}"
+      #   FUNCTIONS_URL: "${_self.PUBLIC_URL}"
+      #   FUNCTIONS_PASSWORD_HASH: "${FUNCTIONS_PASSWORD_HASH}"
+      #   FUNCTIONS_PASSWORD: "${FUNCTIONS_PASSWORD}"
+      #   SSH_KEY: "${SSH_KEY}"
       functions:
         - name: status
           binary: false
