@@ -4,10 +4,6 @@ terraform {
       source  = "digitalocean/digitalocean"
       version = "~> 2.0"
     }
-    tfe = {
-      source = "hashicorp/tfe"
-      version = "~> 0.79.0"
-    }
     tls = {
       source = "hashicorp/tls"
     }
@@ -19,24 +15,18 @@ provider digitalocean {
   token = var.do_token
 }
 
-provider tfe {
-  token = var.tf_token
-}
-
 resource "random_password" "main" {
   length = 32
 }
 
-resource digitalocean_domain main {
-  count = var.create_domain ? 1 : 0
-  
-  name = var.domain
+variable github_repo {
+  type = string
+  default = "chiaryan/do-mc-server-functions"
 }
 
-data digitalocean_domain main {
-  count = var.create_domain ? 0 : 1
-
-  name = var.domain
+variable github_branch {
+  type = string
+  default = "master"
 }
 
 resource digitalocean_app main {
@@ -47,17 +37,9 @@ resource digitalocean_app main {
     function {
       name = var.name
       github {
-        repo = "chiaryan/do-mc-server-functions"
-        branch = "master"
+        repo = var.github_repo
+        branch = var.github_branch
       }
-    }
-    env {
-      key = "TFE_TOKEN"
-      value = var.tf_token
-    }
-    env {
-      key = "WORKSPACE_ID"
-      value = tfe_workspace.main.id
     }
     env {
       key = "SERVER_DOMAIN"
@@ -72,8 +54,8 @@ resource digitalocean_app main {
       value = var.itzg_env
     }
     env {
-      key = "STOP_ADDRESS"
-      value = "$${_self.FUNCTION_URL}"
+      key = "FUNCTIONS_URL"
+      value = "$${_self.PUBLIC_URL}"
     }
     env {
       key = "RECORD"
@@ -100,12 +82,16 @@ resource digitalocean_app main {
       value = "${var.name}-vol"
     }
     env {
-      key = "STOP_ADDRESS_PASSWORD_HASH"
+      key = "FUNCTIONS_PASSWORD_HASH"
       value = random_password.main.bcrypt_hash
     }
     env {
-      key = "STOP_ADDRESS_PASSWORD"
+      key = "FUNCTIONS_PASSWORD"
       value = random_password.main.result
+    }
+    env {
+      key = "SSH_KEY"
+      value = tls_private_key.name.public_key_fingerprint_md5
     }
   }
 }

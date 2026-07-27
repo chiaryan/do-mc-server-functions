@@ -26,3 +26,8 @@ packages:
           main: ""
           runtime: go:1.25
           web: true
+        - name: dns
+          binary: false
+          main: ""
+          runtime: go:1.25
+          web: true

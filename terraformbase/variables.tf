@@ -2,14 +2,6 @@ variable do_token {
     type = string
 }
 
-variable tf_token {
-    type = string
-}
-
-variable github_app_id {
-    type = string
-}
-
 variable itzg_env {
     type = string
     default = ""

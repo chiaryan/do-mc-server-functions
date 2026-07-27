@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/digitalocean/godo"
-	"github.com/hashicorp/go-tfe"
-	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/mcstatus-io/mcutil/v4/response"
 	"github.com/mcstatus-io/mcutil/v4/status"
-	"github.com/zclconf/go-cty/cty"
+	"go.yaml.in/yaml/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -37,8 +36,6 @@ func env(key string) string {
 }
 
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
-	var success bool
-
 	url = env("SERVER_DOMAIN")
 	do_token = env("DO_TOKEN")
 
@@ -53,33 +50,41 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 
 	case "DELETE":
 
-		password, success = os.LookupEnv("PASSWORD_HASH")
-		if !success {
-			panic("no url")
-		}
-
-		hash, ok := args["http"].(map[string]interface{})["headers"].(map[string]string)["authorization"]
-
-		if !ok {
-			return map[string]any{"statusCode": 401}
-		}
-
-		if !strings.HasPrefix(hash, "Bearer ") {
-			return map[string]any{"statusCode": 400}
-		}
-
-		hash = hash[7:]
-
-		err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-
-		if err != nil {
-			return map[string]any{"statusCode": 401}
+		result, success := verifyPassword(args)
+		if success {
+			return result
 		}
 
 		return delete(ctx)
 	default:
 		return CreateErrorResponse("invalid http method")
 	}
+}
+
+func verifyPassword(args map[string]interface{}) (map[string]interface{}, bool) {
+	password, success := os.LookupEnv("FUNCTIONS_PASSWORD_HASH")
+	if !success {
+		panic("no url")
+	}
+
+	hash, ok := args["http"].(map[string]interface{})["headers"].(map[string]string)["authorization"]
+
+	if !ok {
+		return map[string]any{"statusCode": 401}, true
+	}
+
+	if !strings.HasPrefix(hash, "Bearer ") {
+		return map[string]any{"statusCode": 400}, true
+	}
+
+	hash = hash[7:]
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+
+	if err != nil {
+		return map[string]any{"statusCode": 401}, true
+	}
+	return nil, false
 }
 
 func getDropletByName(ctx context.Context) (*godo.Droplet, error) {
@@ -110,28 +115,46 @@ func delete(ctx context.Context) map[string]interface{} {
 
 func post(ctx context.Context) map[string]interface{} {
 
-	// wsp, err := client.Workspaces.ReadByID(context.Background(), workspace_id)
-	// if err != nil {
-	// 	return CreateErrorResponse(err.Error())
-	// }
+	runcmd := []string{
+		fmt.Sprintf(
+			"curl -X POST \"%s/api/dns\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer %s\"",
+			env("FUNCTIONS_URL"),
+			env("FUNCTIONS_PASSWORD"),
+		),
+		"docker run -v /mnt/data:/data -i -p 25565:25565 --env-file .env itzg/minecraft-server",
+	}
 
-	// _, err = client.Runs.Read(context.Background(), wsp.CurrentRun.ID)
-	// if err != nil {
-	// 	return CreateErrorResponse(err.Error())
-	// }
+	if strings.ToLower(env("AUTO_DESTROY")) == "true" {
+		runcmd = append(runcmd,
+			fmt.Sprintf("while true; do curl -X DELETE \"%s/api/status\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer %s\"; sleep 300; done",
+				env("FUNCTIONS_URL"),
+				env("FUNCTIONS_PASSWORD")),
+		)
+	}
 
-	// if current_run.Status != "applied" || !current_run.IsDestroy {
-	// 	return CreateErrorResponse("server still up")
-	// }
-	// if the last run was a completed destroy, create the run
+	document, err := yaml.Marshal(map[string]interface{}{
+		"mounts": [][]string{{
+			fmt.Sprintf("/dev/disk/by-id/scsi-0DO_Volume_%v", env("INSTANCE_VOLUME_NAME")),
+			"/mnt/data", "ext4", "defaults,nofail,discard", "0", "0",
+		}},
 
-	_, _, err := client.Droplets.Create(ctx, &godo.DropletCreateRequest{
+		"runcmd": runcmd,
+		"write_files": []map[string]interface{}{{
+			"content": env("ITZG_ENV"),
+			"path":    "/.env",
+		}},
+	})
+
+	_, _, err = client.Droplets.Create(ctx, &godo.DropletCreateRequest{
 		Name:  droplet_name,
 		Image: godo.DropletCreateImage{Slug: "ubuntu-24-04-x64"},
 		Volumes: []godo.DropletCreateVolume{
 			{ID: env("INSTANCE_VOLUME_ID")},
 		},
-		Size: env("INSTANCE_SIZE"),
+		Size:       env("INSTANCE_SIZE"),
+		UserData:   fmt.Sprintf("#cloud-config\n%v", string(document)),
+		Monitoring: true,
+		SSHKeys:    []godo.DropletCreateSSHKey{{Fingerprint: env("INSTANCE_SSH_KEY")}},
 	})
 
 	if err != nil {
@@ -139,39 +162,6 @@ func post(ctx context.Context) map[string]interface{} {
 	}
 
 	return CreateResponseBody(map[string]interface{}{"create": "ok"})
-}
-
-func lookupTfEnvs() []*tfe.RunVariable {
-	var vars []*tfe.RunVariable
-	type S struct {
-		From string
-		To   string
-	}
-
-	var_name_mapping := []S{
-		{From: "STOP_ADDRESS", To: "stop_function_address"},
-		{From: "STOP_ADDRESS_TOKEN", To: "stop_function_token"},
-		{From: "DO_TOKEN", To: "dotoken"},
-		{From: "RECORD", To: "record"},
-		{From: "DOMAIN", To: "domain"},
-		{From: "ITZG_ENV", To: "itzg_env"},
-		{From: "INSTANCE_SSH_KEY", To: "ssh_key"},
-		{From: "INSTANCE_SIZE", To: "size"},
-		{From: "INSTANCE_VOLUME_NAME", To: "volume_name"},
-		{From: "INSTANCE_REGION", To: "region"},
-		{From: "INSTANCE_AUTO_DESTROY", To: "auto_destroy"},
-	}
-
-	for _, mapping := range var_name_mapping {
-		value, success := os.LookupEnv(mapping.From)
-		if success || value != "" {
-			// hcl value requires double quote
-
-			hclstr := string(hclwrite.TokensForValue(cty.StringVal(value)).Bytes())
-			vars = append(vars, &tfe.RunVariable{Key: mapping.To, Value: hclstr})
-		}
-	}
-	return vars
 }
 
 func get(ctx context.Context) map[string]interface{} {
@@ -232,13 +222,6 @@ func get(ctx context.Context) map[string]interface{} {
 				return CreateErrorResponse(tf.err.Error())
 			}
 
-			for _, atn := range tf.actions {
-				if atn.Type == "destroy" {
-					return CreateResponseBody(map[string]interface{}{
-						"status": "pausing",
-					})
-				}
-			}
 			for _, atn := range tf.actions {
 				if atn.Type == "destroy" {
 					return CreateResponseBody(map[string]interface{}{
