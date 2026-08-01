@@ -19,9 +19,11 @@ func CreateErrorResponse(err string) map[string]interface{} {
 }
 
 func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
+	ret := map[string]interface{}{
 		"body": body,
 	}
+	fmt.Printf("returning body %v", ret)
+	return ret
 }
 
 var url, do_token, droplet_name, password, volume_id string
@@ -43,13 +45,16 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 
 	switch args["http"].(map[string]interface{})["method"] {
 	case "GET":
+		fmt.Printf("calling get\n")
 		return get(ctx)
 
 	case "POST":
+		fmt.Printf("calling post\n")
 		return post(ctx)
 
 	case "DELETE":
 
+		fmt.Printf("calling delete\n")
 		result, success := verifyPassword(args)
 		if success {
 			return result
@@ -62,10 +67,7 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 }
 
 func verifyPassword(args map[string]interface{}) (map[string]interface{}, bool) {
-	password, success := os.LookupEnv("FUNCTIONS_PASSWORD_HASH")
-	if !success {
-		panic("no url")
-	}
+	password := env("FUNCTIONS_PASSWORD_HASH")
 
 	hash, ok := args["http"].(map[string]interface{})["headers"].(map[string]string)["authorization"]
 
@@ -161,7 +163,7 @@ func post(ctx context.Context) map[string]interface{} {
 		return CreateErrorResponse(err.Error())
 	}
 
-	return CreateResponseBody(map[string]interface{}{"create": "ok"})
+	return CreateResponseBody(map[string]interface{}{"delete": "ok"})
 }
 
 func get(ctx context.Context) map[string]interface{} {
