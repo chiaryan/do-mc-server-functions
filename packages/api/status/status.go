@@ -26,7 +26,7 @@ func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	return ret
 }
 
-var url, do_token, droplet_name, password, volume_id string
+// var url, do_token, droplet_name, password, volume_id string
 var client godo.Client
 
 func env(key string) string {
@@ -40,12 +40,13 @@ func env(key string) string {
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
 	if true {
-		return CreateResponseBody(map[string]interface{}{})
+		value, success := os.LookupEnv("DO_TOKEN")
+
+		return CreateResponseBody(map[string]interface{}{
+			value: success,
+		})
 	}
 	fmt.Printf("running with %v", args)
-
-	url = env("SERVER_DOMAIN")
-	do_token = env("DO_TOKEN")
 
 	if true {
 		return CreateResponseBody(args)
@@ -53,7 +54,7 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	if true {
 		return CreateResponseBody(map[string]interface{}{"got here": 0})
 	}
-	client = *godo.NewFromToken(do_token)
+	client = *godo.NewFromToken(env("DO_TOKEN"))
 
 	switch args["http"].(map[string]interface{})["method"] {
 	case "GET":
@@ -163,7 +164,7 @@ func post(ctx context.Context) map[string]interface{} {
 	})
 
 	_, _, err = client.Droplets.Create(ctx, &godo.DropletCreateRequest{
-		Name:  droplet_name,
+		Name:  "mc",
 		Image: godo.DropletCreateImage{Slug: "ubuntu-24-04-x64"},
 		Volumes: []godo.DropletCreateVolume{
 			{ID: env("INSTANCE_VOLUME_ID")},
@@ -222,7 +223,7 @@ func get(ctx context.Context) map[string]interface{} {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		status, err := status.Modern(ctx, url, 25565)
+		status, err := status.Modern(ctx, env("SERVER_DOMAIN"), 25565)
 		mc_chan <- Status{status, err}
 	}()
 
@@ -272,7 +273,7 @@ func get(ctx context.Context) map[string]interface{} {
 					"motd":        mc.status.MOTD.Raw,
 					"players":     *mc.status.Players.Online,
 					"max_players": *mc.status.Players.Max,
-					"url":         url,
+					"url":         env("SERVER_DOMAIN"),
 				}
 
 				if mc.status.Favicon != nil {
