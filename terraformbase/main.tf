@@ -65,6 +65,10 @@ resource digitalocean_app main {
         value = "${var.name}-minecraft"
       }
       env {
+        key = "INSTANCE_REGION"
+        value = var.digitalocean_region
+      }
+      env {
         key = "INSTANCE_VOLUME_NAME"
         value = "${var.name}-vol"
       }

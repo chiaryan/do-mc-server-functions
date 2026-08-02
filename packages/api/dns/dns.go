@@ -21,7 +21,6 @@ func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	}
 }
 
-var url, do_token, droplet_name, password, volume_id string
 var client godo.Client
 
 func env(key string) string {
@@ -58,10 +57,7 @@ func verifyPassword(args map[string]interface{}) (map[string]interface{}, bool) 
 }
 
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
-	url = env("SERVER_DOMAIN")
-	do_token = env("DO_TOKEN")
-
-	client = *godo.NewFromToken(do_token)
+	client = *godo.NewFromToken(env("DO_TOKEN"))
 
 	switch args["http"].(map[string]interface{})["method"] {
 

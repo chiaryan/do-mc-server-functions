@@ -156,6 +156,7 @@ func post(ctx context.Context) map[string]interface{} {
 		UserData:   fmt.Sprintf("#cloud-config\n%v", string(document)),
 		Monitoring: true,
 		SSHKeys:    []godo.DropletCreateSSHKey{{Fingerprint: env("INSTANCE_SSH_KEY")}},
+		Region:     env("INSTANCE_REGION"),
 	})
 
 	if err != nil {
