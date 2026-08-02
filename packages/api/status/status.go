@@ -40,7 +40,7 @@ func env(key string) string {
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
 	if true {
-		return CreateResponseBody(args)
+		return CreateResponseBody(map[string]interface{}{})
 	}
 	fmt.Printf("running with %v", args)
 
