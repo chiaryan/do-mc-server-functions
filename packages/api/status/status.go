@@ -20,7 +20,9 @@ func CreateErrorResponse(err string) map[string]interface{} {
 
 func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	ret := map[string]interface{}{
-		"body": fmt.Sprintf("%v", body),
+		"body": map[string]any{
+			"value": fmt.Sprintf("%v", body),
+		},
 	}
 	fmt.Printf("returning body %v", ret)
 	return ret
