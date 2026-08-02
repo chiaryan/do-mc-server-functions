@@ -40,62 +40,17 @@ resource digitalocean_app main {
         repo = var.github_repo
         branch = var.github_branch
       }
-      env {
-        key = "SERVER_DOMAIN"
-        value = "${var.record}.${var.domain}"
-      }
-      env {
-        key = "DO_TOKEN"
-        value = var.do_token
-      }
-      env {
-        key = "ITZG_ENV"
-        value = var.itzg_env
-      }
-      env {
-        key = "INSTANCE_SSH_KEY"
-        value = digitalocean_ssh_key.main.fingerprint
-      }
-      env {
-        key = "INSTANCE_SIZE"
-        value = var.digitalocean_droplet_size
-      }
-      env {
-        key = "INSTANCE_NAME"
-        value = "${var.name}-minecraft"
-      }
-      env {
-        key = "INSTANCE_REGION"
-        value = var.digitalocean_region
-      }
-      env {
-        key = "INSTANCE_VOLUME_NAME"
-        value = "${var.name}-vol"
-      }
-      env {
-        key = "INSTANCE_VOLUME_ID"
-        value = "${digitalocean_volume.main.id}"
-      }
-      env {
-        key = "FUNCTIONS_PASSWORD_HASH"
-        value = random_password.main.bcrypt_hash
-      }
-      env {
-        key = "FUNCTIONS_URL"
-        value = "$${_self.PUBLIC_URL}"
-      }
-      env {
-        key = "FUNCTIONS_PASSWORD"
-        value = random_password.main.result
-      }
-      env {
-        key = "AUTO_DESTROY"
-        value = var.auto_destroy
+      dynamic env {
+        for_each = local.envs
+
+        content {
+          key = env.key
+          value = env.value
+        }
       }
     }
   }
 }
-
 
 resource digitalocean_volume main {
   name = "${var.name}-vol"

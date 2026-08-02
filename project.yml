@@ -17,6 +17,7 @@ packages:
         FUNCTIONS_PASSWORD: "${FUNCTIONS_PASSWORD}"
         FUNCTIONS_PASSWORD_HASH: "${FUNCTIONS_PASSWORD_HASH}"
         AUTO_DESTROY: "${AUTO_DESTROY}"
+        RECORD_ID: "${RECORD_ID}"
       functions:
         - name: status
           binary: false

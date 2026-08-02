@@ -118,7 +118,7 @@ func post(ctx context.Context) map[string]interface{} {
 
 	runcmd := []string{
 		fmt.Sprintf(
-			"curl -X POST \"%s/api/dns\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer %s\"",
+			"curl -X POST \"%sapi/dns\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer %s\"",
 			env("FUNCTIONS_URL"),
 			env("FUNCTIONS_PASSWORD"),
 		),
@@ -127,7 +127,7 @@ func post(ctx context.Context) map[string]interface{} {
 
 	if strings.ToLower(env("AUTO_DESTROY")) == "true" {
 		runcmd = append(runcmd,
-			fmt.Sprintf("while true; do curl -X DELETE \"%s/api/status\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer %s\"; sleep 300; done",
+			fmt.Sprintf("while true; do curl -X DELETE \"%sapi/status\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer %s\"; sleep 300; done",
 				env("FUNCTIONS_URL"),
 				env("FUNCTIONS_PASSWORD")),
 		)
@@ -148,7 +148,7 @@ func post(ctx context.Context) map[string]interface{} {
 
 	_, _, err = client.Droplets.Create(ctx, &godo.DropletCreateRequest{
 		Name:  env("INSTANCE_NAME"),
-		Image: godo.DropletCreateImage{Slug: "ubuntu-24-04-x64"},
+		Image: godo.DropletCreateImage{Slug: "docker-20-04"},
 		Volumes: []godo.DropletCreateVolume{
 			{ID: env("INSTANCE_VOLUME_ID")},
 		},
