@@ -5,18 +5,17 @@ packages:
       shared: false
       environment:
         DO_TOKEN: "${DO_TOKEN}"
-        INSTANCE_VOLUME_ID: "${INSTANCE_VOLUME_ID}"
         INSTANCE_SSH_KEY: "${INSTANCE_SSH_KEY}"
-        INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
-        ITZG_ENV: "${ITZG_ENV}"
-        SSH_KEY: "${SSH_KEY}"
-        FUNCTIONS_PASSWORD: "${FUNCTIONS_PASSWORD}"
         INSTANCE_SIZE: "${INSTANCE_SIZE}"
         INSTANCE_NAME: "${INSTANCE_NAME}"
-        DOMAIN: "${DOMAIN}"
-        RECORD: "${RECORD}"
+        INSTANCE_VOLUME_ID: "${INSTANCE_VOLUME_ID}"
+        INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
+        ITZG_ENV: "${ITZG_ENV}"
         SERVER_DOMAIN: "${SERVER_DOMAIN}"
+        FUNCTIONS_URL: "${FUNCTIONS_URL}"
+        FUNCTIONS_PASSWORD: "${FUNCTIONS_PASSWORD}"
         FUNCTIONS_PASSWORD_HASH: "${FUNCTIONS_PASSWORD_HASH}"
+        AUTO_DESTROY: "${AUTO_DESTROY}"
       functions:
         - name: status
           binary: false

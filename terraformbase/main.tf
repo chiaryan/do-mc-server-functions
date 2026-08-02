@@ -53,14 +53,6 @@ resource digitalocean_app main {
         value = var.itzg_env
       }
       env {
-        key = "RECORD"
-        value = var.record
-      }
-      env {
-        key = "DOMAIN"
-        value = var.domain
-      }
-      env {
         key = "INSTANCE_SSH_KEY"
         value = digitalocean_ssh_key.main.fingerprint
       }
@@ -85,12 +77,16 @@ resource digitalocean_app main {
         value = random_password.main.bcrypt_hash
       }
       env {
+        key = "FUNCTIONS_URL"
+        value = "$${_self.PUBLIC_URL}"
+      }
+      env {
         key = "FUNCTIONS_PASSWORD"
         value = random_password.main.result
       }
       env {
-        key = "SSH_KEY"
-        value = tls_private_key.name.public_key_fingerprint_md5
+        key = "AUTO_DESTROY"
+        value = string(var.auto_destroy)
       }
     }
   }

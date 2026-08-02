@@ -26,7 +26,6 @@ func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	return ret
 }
 
-// var url, do_token, droplet_name, password, volume_id string
 var client godo.Client
 
 func env(key string) string {
@@ -164,7 +163,7 @@ func post(ctx context.Context) map[string]interface{} {
 	})
 
 	_, _, err = client.Droplets.Create(ctx, &godo.DropletCreateRequest{
-		Name:  "mc",
+		Name:  env("INSTANCE_NAME"),
 		Image: godo.DropletCreateImage{Slug: "ubuntu-24-04-x64"},
 		Volumes: []godo.DropletCreateVolume{
 			{ID: env("INSTANCE_VOLUME_ID")},
