@@ -42,7 +42,7 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	fmt.Printf("running with %v", args)
 
 	if args != nil {
-		return CreateResponseBody(map[string]interface{}{})
+		return CreateResponseBody(args)
 	}
 
 	url = env("SERVER_DOMAIN")
