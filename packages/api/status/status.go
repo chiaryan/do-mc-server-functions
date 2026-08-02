@@ -39,13 +39,16 @@ func env(key string) string {
 
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
+	if true {
+		return CreateResponseBody(args)
+	}
 	fmt.Printf("running with %v", args)
 
 	url = env("SERVER_DOMAIN")
 	do_token = env("DO_TOKEN")
 
 	if true {
-		return CreateResponseBody(map[string]interface{}{})
+		return CreateResponseBody(args)
 	}
 	if true {
 		return CreateResponseBody(map[string]interface{}{"got here": 0})
