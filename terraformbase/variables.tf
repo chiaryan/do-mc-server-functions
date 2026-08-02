@@ -43,3 +43,8 @@ variable digitalocean_droplet_size {
     default = "s-2vcpu-4gb"
 }
 
+variable auto_destroy {
+    type = bool
+    default = true
+}
+

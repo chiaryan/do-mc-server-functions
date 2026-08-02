@@ -86,7 +86,7 @@ resource digitalocean_app main {
       }
       env {
         key = "AUTO_DESTROY"
-        value = string(var.auto_destroy)
+        value = var.auto_destroy
       }
     }
   }
