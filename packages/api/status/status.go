@@ -20,7 +20,7 @@ func CreateErrorResponse(err string) map[string]interface{} {
 
 func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	ret := map[string]interface{}{
-		"body": body,
+		"body": fmt.Sprintf("%v", body),
 	}
 	fmt.Printf("returning body %v", ret)
 	return ret
@@ -40,10 +40,6 @@ func env(key string) string {
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
 	fmt.Printf("running with %v", args)
-
-	if args != nil {
-		return CreateResponseBody(args)
-	}
 
 	url = env("SERVER_DOMAIN")
 	do_token = env("DO_TOKEN")
