@@ -3,6 +3,20 @@
 packages:
     - name: api
       shared: false
+      # environment:
+      #   DO_TOKEN: "${DO_TOKEN}"
+      #   INSTANCE_VOLUME_ID: "${INSTANCE_VOLUME_ID}"
+      #   INSTANCE_SSH_KEY: "${INSTANCE_SSH_KEY}"
+      #   INSTANCE_VOLUME_NAME: "${INSTANCE_VOLUME_NAME}"
+      #   ITZG_ENV: "${ITZG_ENV}"
+      #   SSH_KEY: "${SSH_KEY}"
+      #   FUNCTIONS_PASSWORD: "${FUNCTIONS_PASSWORD}"
+      #   INSTANCE_SIZE: "${INSTANCE_SIZE}"
+      #   INSTANCE_NAME: "${INSTANCE_NAME}"
+      #   DOMAIN: "${DOMAIN}"
+      #   RECORD: "${RECORD}"
+      #   SERVER_DOMAIN: "${SERVER_DOMAIN}"
+      #   FUNCTIONS_PASSWORD_HASH: "${FUNCTIONS_PASSWORD_HASH}"
       functions:
         - name: status
           binary: false

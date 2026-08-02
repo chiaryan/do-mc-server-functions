@@ -30,14 +30,17 @@ var url, do_token, droplet_name, password, volume_id string
 var client godo.Client
 
 func env(key string) string {
-	url, success := os.LookupEnv(key)
-	if !success {
+	value, success := os.LookupEnv(key)
+	if !success || value == "" {
 		panic("no env " + key)
 	}
-	return url
+	return value
 }
 
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
+
+	fmt.Printf("running with %v", args)
+
 	url = env("SERVER_DOMAIN")
 	do_token = env("DO_TOKEN")
 
