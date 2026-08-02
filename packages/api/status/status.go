@@ -38,13 +38,6 @@ func env(key string) string {
 
 func Main(ctx context.Context, args map[string]interface{}) map[string]interface{} {
 
-	if true {
-		value, success := os.LookupEnv("DO_TOKEN")
-
-		return CreateResponseBody(map[string]interface{}{
-			value: success,
-		})
-	}
 	fmt.Printf("running with %v", args)
 
 	if true {
