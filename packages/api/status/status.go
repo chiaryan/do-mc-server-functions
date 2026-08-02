@@ -45,6 +45,9 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	do_token = env("DO_TOKEN")
 
 	if true {
+		return CreateResponseBody(map[string]interface{}{})
+	}
+	if true {
 		return CreateResponseBody(map[string]interface{}{"got here": 0})
 	}
 	client = *godo.NewFromToken(do_token)
