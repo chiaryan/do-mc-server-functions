@@ -20,9 +20,7 @@ func CreateErrorResponse(err string) map[string]interface{} {
 
 func CreateResponseBody(body map[string]interface{}) map[string]interface{} {
 	ret := map[string]interface{}{
-		"body": map[string]any{
-			"value": fmt.Sprintf("%v", body),
-		},
+		"body": body,
 	}
 	fmt.Printf("returning body %v", ret)
 	return ret
@@ -46,10 +44,16 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 	url = env("SERVER_DOMAIN")
 	do_token = env("DO_TOKEN")
 
+	if true {
+		return CreateResponseBody(map[string]interface{}{"got here": 0})
+	}
 	client = *godo.NewFromToken(do_token)
 
 	switch args["http"].(map[string]interface{})["method"] {
 	case "GET":
+		if true {
+			return CreateResponseBody(map[string]interface{}{"got here": 1})
+		}
 		fmt.Printf("calling get\n")
 		return get(ctx)
 
@@ -185,6 +189,9 @@ func get(ctx context.Context) map[string]interface{} {
 	tf_chan := make(chan Run)
 	mc_chan := make(chan Status)
 
+	if true {
+		return CreateResponseBody(map[string]interface{}{"got here": 2})
+	}
 	go func() {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -220,6 +227,9 @@ func get(ctx context.Context) map[string]interface{} {
 		select {
 		case tf = <-tf_chan:
 
+			if true {
+				return CreateResponseBody(map[string]interface{}{"got here": 3})
+			}
 			if tf.err != nil {
 				if tf.err.Error() == "droplet not found" {
 					return CreateResponseBody(map[string]interface{}{
