@@ -66,21 +66,26 @@ func Main(ctx context.Context, args map[string]interface{}) map[string]interface
 }
 
 func verifyPassword(args map[string]interface{}) (map[string]interface{}, bool) {
-	password := env("FUNCTIONS_PASSWORD_HASH")
 
-	hash, ok := args["http"].(map[string]interface{})["headers"].(map[string]string)["authorization"]
+	headers, ok := args["http"].(map[string]any)["headers"].(map[string]any)
 
 	if !ok {
 		return map[string]any{"statusCode": 401}, true
 	}
 
-	if !strings.HasPrefix(hash, "Bearer ") {
+	password, ok := headers["authorization"].(string)
+
+	if !ok {
+		return map[string]any{"statusCode": 401}, true
+	}
+
+	if !strings.HasPrefix(password, "Bearer ") {
 		return map[string]any{"statusCode": 400}, true
 	}
 
-	hash = hash[7:]
+	password = password[7:]
 
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(env("FUNCTIONS_PASSWORD_HASH")), []byte(password))
 
 	if err != nil {
 		return map[string]any{"statusCode": 401}, true

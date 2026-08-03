@@ -1,6 +1,7 @@
 locals {
   envs = {
     SERVER_DOMAIN = "${var.record}.${var.domain}"
+    DOMAIN = var.domain
     RECORD_ID = digitalocean_record.main.id
     DO_TOKEN = var.do_token
     ITZG_ENV = var.itzg_env
