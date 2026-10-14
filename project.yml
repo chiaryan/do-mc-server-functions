@@ -25,6 +25,8 @@ packages:
           main: ""
           runtime: go:1.25
           web: true
+          limits:
+            timeout: 30000
         - name: dns
           binary: false
           main: ""
